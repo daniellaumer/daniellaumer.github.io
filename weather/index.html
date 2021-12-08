@@ -1,0 +1,300 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="description" content="">
+<title>DemoWeather - (ArcGIS Play)</title>
+
+
+<link rel="stylesheet" href="https://jsdev.arcgis.com/4.22/esri/css/main.css">
+
+
+<style>
+	html {
+    font-family: "Avenir Next";
+	}
+
+	html,
+body,
+#viewDiv {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#optionsDiv {
+  padding: 20px 0;
+  z-index: 1;
+  text-align: center;
+  background-color: white;
+  margin: 30px 0 30px 30px;
+  width: 100%;
+}
+
+button {
+  background: white;
+  padding: 7px;
+  border: 1px solid #005e95;
+  font-size: 0.9em;
+  margin: 5px;
+  color: #005e95;
+}
+
+button:hover {
+  background: #61b9ec;
+  color: white;
+  cursor: pointer;
+}
+
+button:focus {
+  background: #126b9e;
+  color: white;
+  cursor: pointer;
+}
+
+.clicked {
+  background-color: #005e95;
+  color: white;
+}
+
+.slider {
+  -webkit-appearance: none;
+  width: 30%;
+  height: 5px;
+  border-radius: 5px;
+  background: #d3d3d3;
+  outline: none;
+  -webkit-transition: 0.2s;
+  transition: opacity 0.2s;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #005e95;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #005e95;
+  cursor: pointer;
+}
+
+#config {
+  margin: 10px;
+  background-color: white;
+  padding: 20px;
+}
+
+.hideUI .esri-ui {
+  display: none;
+}
+
+</style>
+
+
+<script src="https://jsdev.arcgis.com/4.22"  ></script>
+
+
+</head>
+<body>
+	<div id="optionsDiv">
+  <button id="sunny" class = "clicked">Sunny</button>
+  <button id="cloudy">Cloudy</button>
+  <button id="rainy">Rainy</button>
+  <button id="foggy">Foggy</button>
+  <input type="range" min="0" max="1" value="0.5" step="0.1" class="slider" id="slider">
+
+
+</div>
+
+<div id="config">Change the quality of the atmopshere:
+  <select name="abc" id="atmosphere">
+  <!-- <option value="high">Realistic Atmosphere</option> -->
+  <option value="low">low</option>
+  <option value="high" selected>high</option>
+  <!-- <option value="medium">NEW Medium Atmosphere</option> -->
+</select>
+  <div> Change the transparency of the ground:
+    <input type="range" min="0" max="1" value="1" step="0.1" class="slider" id="sliderTransparency">
+  </div>
+
+  <div>==> press <code>g</code> to show/hide UI</div>
+
+</div>
+
+<div id="viewDiv"></div>
+
+	
+
+	<script>
+		require(["esri/identity/OAuthInfo", "esri/identity/IdentityManager", "esri/views/View"], function(OAuthInfo, IdentityManager, View) {
+    	IdentityManager.registerOAuthInfos([
+				new OAuthInfo({
+					appId: "RKNJfdy3Vn6nlmKm",
+					popup: true,
+					popupCallbackUrl: "/arcgis-play/dist/oauth-callback.html"
+				})
+			]);
+
+			if ("views" in View) {
+				View.views.on("change", function updateViews() {
+					let i = 0;
+
+					while (true) {
+						const name = i === 0 ? "view" : "view" + i;
+						const newView = View.views.getItemAt(i);
+
+						if (newView) {
+							window[name] = newView;
+						} else if (window[name]) {
+							delete window[name];
+						} else {
+							break;
+						}
+
+						i++;
+					}
+				});
+			}
+
+			window.isCompare = false;
+
+require(["require", "esri/Map", "esri/views/SceneView", "esri/views/3d/environment/SunnyWeather", "esri/views/3d/environment/CloudyWeather", "esri/views/3d/environment/RainyWeather", "esri/views/3d/environment/FoggyWeather", "esri/widgets/Daylight"], function (require, Map, SceneView, SunnyWeather, CloudyWeather, RainyWeather, FoggyWeather, Daylight) {
+    "use strict";
+    
+    // Gui elements ######################################################################
+    var optionsDiv = document.getElementById("optionsDiv");
+    var configDiv = document.getElementById("config");
+    var buttonSunny = document.getElementById("sunny");
+    var buttonCloudy = document.getElementById("cloudy");
+    var buttonRainy = document.getElementById("rainy");
+    var buttonFoggy = document.getElementById("foggy");
+    var slider = document.getElementById("slider");
+    var sliderTransparency = document.getElementById("sliderTransparency");
+    var selectQuality = document.getElementById("atmosphere");
+    var buttonClicked = buttonSunny;
+    // Load scene ######################################################################
+    var map = new Map({
+        basemap: "satellite",
+        ground: "world-elevation"
+    });
+    var view = new SceneView({
+        container: "viewDiv",
+        map: map,
+        camera: {
+            position: {
+                longitude: 9.52738522,
+                latitude: 46.75399533,
+                z: 3165.62387
+            },
+            heading: 315,
+            tilt: 86.67
+        },
+        environment: {
+            atmosphereEnabled: true,
+            atmosphere: {
+                quality: "high"
+            },
+            lighting: {
+                directShadowsEnabled: true,
+                cameraTrackingEnabled: true
+            },
+            weather: {
+                type: "sunny",
+                cloudCover: slider.value
+            }
+        },
+        qualityProfile: "high"
+    });
+    view.when(function () {
+        // allow navigation above and below the ground
+        map.ground.navigationConstraint = {
+            type: "none"
+        };
+    });
+    var daylightWidget = new Daylight({
+        view: view
+    });
+    view.ui.add(optionsDiv, "top-right");
+    view.ui.add(configDiv, "bottom-left");
+    view.ui.add(daylightWidget, "top-right");
+    // Interactions ######################################################################
+    // Add all the event listeners for the buttons and slider
+    buttonSunny.addEventListener("click", function () {
+        styleClicked(buttonSunny);
+        //view.environment.weather.type = "sunny";
+        view.environment.weather = new SunnyWeather({ cloudCover: slider.value });
+        //view.environment.weather = { type: "sunny", cloudCover: slider.value };
+    });
+    buttonCloudy.addEventListener("click", function () {
+        styleClicked(buttonCloudy);
+        view.environment.weather = new CloudyWeather({ cloudCover: slider.value });
+        //view.environment.weather = { type: "cloudy", cloudCover: slider.value };
+    });
+    buttonRainy.addEventListener("click", function () {
+        styleClicked(buttonRainy);
+        view.environment.weather = new RainyWeather({ cloudCover: slider.value });
+        //view.environment.weather = { type: "rainy", cloudCover: slider.value };
+    });
+    buttonFoggy.addEventListener("click", function () {
+        styleClicked(buttonFoggy);
+        view.environment.weather = new FoggyWeather({ fogStrength: slider.value });
+    });
+    // Update the current slider value (each time you drag the slider handle)
+    slider.addEventListener("change", function () {
+        if (buttonClicked.id == "foggy") {
+            view.environment.weather.fogStrength = slider.value;
+        }
+        else {
+            view.environment.weather.cloudCover = slider.value;
+        }
+    });
+    sliderTransparency.addEventListener("change", function () {
+        map.ground.opacity = sliderTransparency.value;
+    });
+    selectQuality.addEventListener("change", function () {
+        switchAtmosphere(selectQuality.value);
+    });
+    // Helper functions ######################################################################
+    function styleClicked(button) {
+        buttonClicked.classList.remove("clicked");
+        button.classList.add("clicked");
+        buttonClicked = button;
+    }
+    // atmo controls //
+    function switchAtmosphere(value) {
+        switch (value) {
+            case "low":
+                view.environmentManager._renderer._enableNewAtmosphere = false;
+                view.environment.atmosphere.quality = value;
+                break;
+            case "high":
+                view.environmentManager._renderer._enableNewAtmosphere = true;
+                view._stage.renderView._renderer._enableNewAtmosphere = true;
+                view.environment.atmosphere.quality = value;
+                break;
+        }
+        view.environmentManager._renderer._updateAtmosphere();
+    }
+    //toggle ui with `g` key
+    document.getElementById("viewDiv").addEventListener("keyup", function (event) {
+        if (event.isComposing || event.key === "g") {
+            document.body.classList.toggle("hideUI");
+        }
+    });
+});
+
+		});
+	</script>
+</body>
+</html>
