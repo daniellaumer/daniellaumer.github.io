@@ -93,6 +93,7 @@ button:focus {
   margin: 10px;
   background-color: white;
   padding: 20px;
+  width: 100%;
 }
 
 .hideUI .esri-ui {
@@ -169,7 +170,7 @@ button:focus {
 
 			window.isCompare = false;
 
-require(["require", "esri/Map", "esri/views/SceneView", "esri/views/3d/environment/SunnyWeather", "esri/views/3d/environment/CloudyWeather", "esri/views/3d/environment/RainyWeather", "esri/views/3d/environment/FoggyWeather", "esri/widgets/Daylight"], function (require, Map, SceneView, SunnyWeather, CloudyWeather, RainyWeather, FoggyWeather, Daylight) {
+require(["require", "esri/Map", "esri/views/SceneView", "esri/views/3d/environment/SunnyWeather", "esri/views/3d/environment/CloudyWeather", "esri/views/3d/environment/RainyWeather", "esri/views/3d/environment/FoggyWeather", "esri/widgets/Daylight", "esri/widgets/Expand"], function (require, Map, SceneView, SunnyWeather, CloudyWeather, RainyWeather, FoggyWeather, Daylight, Expand) {
     "use strict";
     
     // Gui elements ######################################################################
@@ -225,9 +226,17 @@ require(["require", "esri/Map", "esri/views/SceneView", "esri/views/3d/environme
     var daylightWidget = new Daylight({
         view: view
     });
+
+    const bgExpand = 
     view.ui.add(optionsDiv, "top-right");
-    view.ui.add(configDiv, "bottom-left");
-    view.ui.add(daylightWidget, "top-right");
+    view.ui.add(new Expand({
+  view: view,
+  content: configDiv
+}), "bottom-left");
+    view.ui.add(new Expand({
+  view: view,
+  content: daylightWidget
+}), "top-right");
     // Interactions ######################################################################
     // Add all the event listeners for the buttons and slider
     buttonSunny.addEventListener("click", function () {
